@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { cn } from "../common/utils";
 import {
   IdleScreen,
@@ -7,8 +7,9 @@ import {
   RushedScreen,
   ResultsScreen,
 } from "./screen";
+import useStatusHook from "../hooks/useStatusHook";
 
-type Status = "IDLE" | "WAITING" | "CLICKING" | "RUSHED" | "RESULTS";
+export type Status = "IDLE" | "WAITING" | "CLICKING" | "RUSHED" | "RESULTS";
 
 const Backgrounds = {
   IDLE: "bg-[#3783CA]",
@@ -19,9 +20,10 @@ const Backgrounds = {
 } as const satisfies Record<Status, string>;
 
 export const InitialScreen = () => {
-  const [status, setStatus] = useState<Status>("IDLE");
   const userTime = useRef({ start: 0, end: 0 });
   const finalTime = userTime.current.end - userTime.current.start;
+
+  const { status, setStatus } = useStatusHook(2000);
 
   const handleStatus = () => {
     switch (status) {
@@ -52,16 +54,6 @@ export const InitialScreen = () => {
         break;
     }
   };
-
-  useEffect(() => {
-    const randomTime = Math.floor(Math.random() * 3000);
-    if (status !== "RESULTS") {
-      const timeoutId = setTimeout(() => {
-        setStatus((current) => (current === "RUSHED" ? "RUSHED" : "CLICKING"));
-      }, randomTime + 1000);
-      return () => clearInterval(timeoutId);
-    }
-  }, [status]);
 
   return (
     <section
