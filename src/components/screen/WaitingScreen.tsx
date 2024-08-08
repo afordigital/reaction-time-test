@@ -1,8 +1,12 @@
+import { leapfrog } from "ldrs";
+
+leapfrog.register();
+
 export const WaitingScreen = () => {
   return (
-    <>
-      <h1 className="text-7xl font-semibold">Reaction Time Test</h1>
-      <h2 className="text-4xl">Click anyway to start</h2>
-    </>
+    <div className="flex flex-col items-center gap-4">
+      <l-leapfrog size="80" speed="2.5" color="white"></l-leapfrog>
+      <h1 className="text-5xl font-semibold">Waiting for green</h1>
+    </div>
   );
 };

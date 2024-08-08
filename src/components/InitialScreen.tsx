@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { cn } from "../common/utils";
 import {
   IdleScreen,
@@ -20,15 +20,41 @@ const Backgrounds = {
 
 export const InitialScreen = () => {
   const [status, setStatus] = useState<Status>("IDLE");
+  const userTime = useRef({ start: 0, end: 0 });
+  const finalTime = userTime.current.end - userTime.current.start;
 
   const handleStatus = () => {
     if (status === "IDLE") {
       setStatus("WAITING");
       startTimer();
     }
+    if (status === "WAITING") {
+      setStatus("RUSHED");
+    }
+    if (status === "RUSHED") {
+      setStatus("WAITING");
+      startTimer();
+    }
+    if (status === "CLICKING") {
+      userTime.current.end = performance.now();
+      setStatus("RESULTS");
+    }
+    if (status === "RESULTS") {
+      userTime.current.start = 0;
+      userTime.current.end = 0;
+      setStatus("WAITING");
+      startTimer();
+    }
+    return;
   };
 
-  const startTimer = () => {};
+  const startTimer = () => {
+    const randomTime = Math.floor(Math.random() * 3000);
+    setTimeout(() => {
+      setStatus((current) => (current === "RUSHED" ? "RUSHED" : "CLICKING"));
+      userTime.current.start = performance.now();
+    }, randomTime + 1000);
+  };
 
   return (
     <section
@@ -42,7 +68,7 @@ export const InitialScreen = () => {
       {status === "WAITING" && <WaitingScreen />}
       {status === "CLICKING" && <ClickingScreen />}
       {status === "RUSHED" && <RushedScreen />}
-      {status === "RESULTS" && <ResultsScreen />}
+      {status === "RESULTS" && <ResultsScreen time={finalTime} />}
     </section>
   );
 };
