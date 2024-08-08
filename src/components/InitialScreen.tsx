@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { cn } from "../common/utils";
 import {
   IdleScreen,
@@ -7,9 +7,8 @@ import {
   RushedScreen,
   ResultsScreen,
 } from "./screen";
-import useStatusHook from "../hooks/useStatusHook";
 
-export type Status = "IDLE" | "WAITING" | "CLICKING" | "RUSHED" | "RESULTS";
+type Status = "IDLE" | "WAITING" | "CLICKING" | "RUSHED" | "RESULTS";
 
 const Backgrounds = {
   IDLE: "bg-[#3783CA]",
@@ -20,40 +19,60 @@ const Backgrounds = {
 } as const satisfies Record<Status, string>;
 
 export const InitialScreen = () => {
+  const [status, setStatus] = useState<Status>("IDLE");
   const userTime = useRef({ start: 0, end: 0 });
+  const timeoutId = useRef<number | null>(null);
+
   const finalTime = userTime.current.end - userTime.current.start;
 
-  const { status, setStatus } = useStatusHook(2000);
-
   const handleStatus = () => {
+    if (timeoutId.current) {
+      clearTimeout(timeoutId.current);
+      timeoutId.current = null;
+    }
+
     switch (status) {
       case "IDLE":
         setStatus("WAITING");
+        startTimer();
         break;
-
       case "WAITING":
         setStatus("RUSHED");
         break;
-
       case "RUSHED":
         setStatus("WAITING");
+        startTimer();
         break;
-
       case "CLICKING":
         userTime.current.end = performance.now();
         setStatus("RESULTS");
         break;
-
       case "RESULTS":
         userTime.current.start = 0;
         userTime.current.end = 0;
         setStatus("WAITING");
+        startTimer();
         break;
-
       default:
         break;
     }
   };
+
+  const startTimer = () => {
+    const randomTime = Math.floor(Math.random() * 3000) + 1000;
+    timeoutId.current = setTimeout(() => {
+      setStatus((current) => (current === "RUSHED" ? "RUSHED" : "CLICKING"));
+      userTime.current.start = performance.now();
+    }, randomTime);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timeoutId.current) {
+        clearTimeout(timeoutId.current);
+      }
+    };
+  }, []);
 
   return (
     <section
