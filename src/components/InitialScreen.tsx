@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "../common/utils";
 import {
   IdleScreen,
@@ -24,37 +24,44 @@ export const InitialScreen = () => {
   const finalTime = userTime.current.end - userTime.current.start;
 
   const handleStatus = () => {
-    if (status === "IDLE") {
-      setStatus("WAITING");
-      startTimer();
+    switch (status) {
+      case "IDLE":
+        setStatus("WAITING");
+        break;
+
+      case "WAITING":
+        setStatus("RUSHED");
+        break;
+
+      case "RUSHED":
+        setStatus("WAITING");
+        break;
+
+      case "CLICKING":
+        userTime.current.end = performance.now();
+        setStatus("RESULTS");
+        break;
+
+      case "RESULTS":
+        userTime.current.start = 0;
+        userTime.current.end = 0;
+        setStatus("WAITING");
+        break;
+
+      default:
+        break;
     }
-    if (status === "WAITING") {
-      setStatus("RUSHED");
-    }
-    if (status === "RUSHED") {
-      setStatus("WAITING");
-      startTimer();
-    }
-    if (status === "CLICKING") {
-      userTime.current.end = performance.now();
-      setStatus("RESULTS");
-    }
-    if (status === "RESULTS") {
-      userTime.current.start = 0;
-      userTime.current.end = 0;
-      setStatus("WAITING");
-      startTimer();
-    }
-    return;
   };
 
-  const startTimer = () => {
+  useEffect(() => {
     const randomTime = Math.floor(Math.random() * 3000);
-    setTimeout(() => {
-      setStatus((current) => (current === "RUSHED" ? "RUSHED" : "CLICKING"));
-      userTime.current.start = performance.now();
-    }, randomTime + 1000);
-  };
+    if (status !== "RESULTS") {
+      const timeoutId = setTimeout(() => {
+        setStatus((current) => (current === "RUSHED" ? "RUSHED" : "CLICKING"));
+      }, randomTime + 1000);
+      return () => clearInterval(timeoutId);
+    }
+  }, [status]);
 
   return (
     <section
