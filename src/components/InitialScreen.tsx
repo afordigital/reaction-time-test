@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef } from "react";
 import { cn } from "../common/utils";
 import {
   IdleScreen,
@@ -7,8 +7,9 @@ import {
   RushedScreen,
   ResultsScreen,
 } from "./screen";
+import useStatusHook from "../hook/useStatusHook";
 
-type Status = "IDLE" | "WAITING" | "CLICKING" | "RUSHED" | "RESULTS";
+export type Status = "IDLE" | "WAITING" | "CLICKING" | "RUSHED" | "RESULTS";
 
 const Backgrounds = {
   IDLE: "bg-[#3783CA]",
@@ -19,11 +20,15 @@ const Backgrounds = {
 } as const satisfies Record<Status, string>;
 
 export const InitialScreen = () => {
-  const [status, setStatus] = useState<Status>("IDLE");
   const userTime = useRef({ start: 0, end: 0 });
   const timeoutId = useRef<number | null>(null);
 
   const finalTime = userTime.current.end - userTime.current.start;
+
+  const { status, setStatus } = useStatusHook({
+    timeoutId,
+    userTime,
+  });
 
   const handleStatus = () => {
     if (timeoutId.current) {
@@ -34,14 +39,12 @@ export const InitialScreen = () => {
     switch (status) {
       case "IDLE":
         setStatus("WAITING");
-        startTimer();
         break;
       case "WAITING":
         setStatus("RUSHED");
         break;
       case "RUSHED":
         setStatus("WAITING");
-        startTimer();
         break;
       case "CLICKING":
         userTime.current.end = performance.now();
@@ -51,28 +54,11 @@ export const InitialScreen = () => {
         userTime.current.start = 0;
         userTime.current.end = 0;
         setStatus("WAITING");
-        startTimer();
         break;
       default:
         break;
     }
   };
-
-  const startTimer = () => {
-    const randomTime = Math.floor(Math.random() * 3000) + 1000;
-    timeoutId.current = setTimeout(() => {
-      setStatus((current) => (current === "RUSHED" ? "RUSHED" : "CLICKING"));
-      userTime.current.start = performance.now();
-    }, randomTime);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (timeoutId.current) {
-        clearTimeout(timeoutId.current);
-      }
-    };
-  }, []);
 
   return (
     <section
