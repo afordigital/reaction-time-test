@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "../common/utils";
 import {
   IdleScreen,
@@ -8,6 +8,7 @@ import {
   ResultsScreen,
 } from "./screen";
 import useStatusHook from "../hook/useStatusHook";
+import { createClient } from "@supabase/supabase-js";
 
 export type Status = "IDLE" | "WAITING" | "CLICKING" | "RUSHED" | "RESULTS";
 
@@ -19,11 +20,38 @@ const Backgrounds = {
   RESULTS: "bg-[#3783CA]",
 } as const satisfies Record<Status, string>;
 
+const supabase = createClient(
+  import.meta.env.VITE_PROJECT_URL,
+  import.meta.env.VITE_API_KEY
+);
+
+const getUsersFromDB = async () => {
+  const users = await supabase
+    .from("users")
+    .select()
+    .order("score", { ascending: false })
+    .limit(10);
+  return users.data;
+};
+
+export type Leaderboard = {
+  name: string;
+  created_at: Date;
+  score: number;
+};
+
 export const InitialScreen = () => {
   const userTime = useRef({ start: 0, end: 0 });
   const timeoutId = useRef<number | null>(null);
+  const [user, setUser] = useState("");
+  const [leaderboard, setLeaderboard] = useState<Leaderboard[] | null>(null);
 
   const finalTime = userTime.current.end - userTime.current.start;
+
+  useEffect(() => {
+    if (leaderboard) return;
+    getUsersFromDB().then(setLeaderboard);
+  }, [leaderboard]);
 
   const { status, setStatus } = useStatusHook({
     timeoutId,
@@ -37,9 +65,6 @@ export const InitialScreen = () => {
     }
 
     switch (status) {
-      case "IDLE":
-        setStatus("WAITING");
-        break;
       case "WAITING":
         setStatus("RUSHED");
         break;
@@ -47,6 +72,7 @@ export const InitialScreen = () => {
         setStatus("WAITING");
         break;
       case "CLICKING":
+        saveUserInDB();
         userTime.current.end = performance.now();
         setStatus("RESULTS");
         break;
@@ -60,6 +86,24 @@ export const InitialScreen = () => {
     }
   };
 
+  const startGame = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const form = event.target as HTMLFormElement;
+    const usernameInput = form.elements.namedItem(
+      "username"
+    ) as HTMLInputElement;
+    const username = usernameInput.value;
+
+    setUser(username);
+    setStatus("WAITING");
+  };
+
+  const saveUserInDB = async () => {
+    const newFinalTime = userTime.current.end - userTime.current.start;
+    await supabase.from("users").insert({ name: user, score: newFinalTime });
+  };
+
   return (
     <section
       onClick={handleStatus}
@@ -68,7 +112,9 @@ export const InitialScreen = () => {
         "flex flex-col gap-4 items-center justify-center w-full h-full"
       )}
     >
-      {status === "IDLE" && <IdleScreen />}
+      {status === "IDLE" && (
+        <IdleScreen startGame={startGame} leaderboard={leaderboard} />
+      )}
       {status === "WAITING" && <WaitingScreen />}
       {status === "CLICKING" && <ClickingScreen />}
       {status === "RUSHED" && <RushedScreen />}

@@ -7,14 +7,14 @@ type Props = {
   userTime: React.MutableRefObject<{
     start: number;
     end: number;
-  }>
-
-}
+  }>;
+};
 
 const useStatusHook = ({ time = 1000, timeoutId, userTime }: Props) => {
   const [status, setStatus] = useState<Status>("IDLE");
 
   useEffect(() => {
+    if (status === "IDLE") return;
     const randomTime = Math.floor(Math.random() * 3000) + time;
     timeoutId.current = setTimeout(() => {
       setStatus((current) => (current === "RUSHED" ? "RUSHED" : "CLICKING"));
@@ -27,7 +27,7 @@ const useStatusHook = ({ time = 1000, timeoutId, userTime }: Props) => {
     };
   }, [status, timeoutId, time, userTime]);
 
-  return { status, setStatus }
-}
+  return { status, setStatus };
+};
 
-export default useStatusHook
+export default useStatusHook;
