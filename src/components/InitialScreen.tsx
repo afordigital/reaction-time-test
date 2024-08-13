@@ -42,7 +42,7 @@ export type Leaderboard = {
 
 export const InitialScreen = () => {
   const userTime = useRef({ start: 0, end: 0 });
-  const timeoutId = useRef<number | null>(null);
+  const timeoutId = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [user, setUser] = useState("");
   const [leaderboard, setLeaderboard] = useState<Leaderboard[] | null>(null);
 
