@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { cn } from "../common/utils";
 import {
   IdleScreen,
@@ -7,8 +7,9 @@ import {
   RushedScreen,
   ResultsScreen,
 } from "./screen";
+import useStatusHook from "../hook/useStatusHook";
 
-type Status = "IDLE" | "WAITING" | "CLICKING" | "RUSHED" | "RESULTS";
+export type Status = "IDLE" | "WAITING" | "CLICKING" | "RUSHED" | "RESULTS";
 
 const Backgrounds = {
   IDLE: "bg-[#3783CA]",
@@ -19,41 +20,44 @@ const Backgrounds = {
 } as const satisfies Record<Status, string>;
 
 export const InitialScreen = () => {
-  const [status, setStatus] = useState<Status>("IDLE");
   const userTime = useRef({ start: 0, end: 0 });
+  const timeoutId = useRef<number | null>(null);
+
   const finalTime = userTime.current.end - userTime.current.start;
 
-  const handleStatus = () => {
-    if (status === "IDLE") {
-      setStatus("WAITING");
-      startTimer();
-    }
-    if (status === "WAITING") {
-      setStatus("RUSHED");
-    }
-    if (status === "RUSHED") {
-      setStatus("WAITING");
-      startTimer();
-    }
-    if (status === "CLICKING") {
-      userTime.current.end = performance.now();
-      setStatus("RESULTS");
-    }
-    if (status === "RESULTS") {
-      userTime.current.start = 0;
-      userTime.current.end = 0;
-      setStatus("WAITING");
-      startTimer();
-    }
-    return;
-  };
+  const { status, setStatus } = useStatusHook({
+    timeoutId,
+    userTime,
+  });
 
-  const startTimer = () => {
-    const randomTime = Math.floor(Math.random() * 3000);
-    setTimeout(() => {
-      setStatus((current) => (current === "RUSHED" ? "RUSHED" : "CLICKING"));
-      userTime.current.start = performance.now();
-    }, randomTime + 1000);
+  const handleStatus = () => {
+    if (timeoutId.current) {
+      clearTimeout(timeoutId.current);
+      timeoutId.current = null;
+    }
+
+    switch (status) {
+      case "IDLE":
+        setStatus("WAITING");
+        break;
+      case "WAITING":
+        setStatus("RUSHED");
+        break;
+      case "RUSHED":
+        setStatus("WAITING");
+        break;
+      case "CLICKING":
+        userTime.current.end = performance.now();
+        setStatus("RESULTS");
+        break;
+      case "RESULTS":
+        userTime.current.start = 0;
+        userTime.current.end = 0;
+        setStatus("WAITING");
+        break;
+      default:
+        break;
+    }
   };
 
   return (
