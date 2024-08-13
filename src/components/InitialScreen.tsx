@@ -40,6 +40,8 @@ export type Leaderboard = {
   score: number;
 };
 
+console.log("Si lees esto suscríbete");
+
 export const InitialScreen = () => {
   const userTime = useRef({ start: 0, end: 0 });
   const timeoutId = useRef<ReturnType<typeof setTimeout> | null>(null);
