@@ -74,8 +74,8 @@ export const InitialScreen = () => {
         setStatus("WAITING");
         break;
       case "CLICKING":
-        saveUserInDB();
         userTime.current.end = performance.now();
+        saveUserInDB();
         setStatus("RESULTS");
         break;
       case "RESULTS":
