@@ -1,5 +1,8 @@
 import { cn } from "../../common/utils";
 import { Leaderboard } from "../InitialScreen";
+import { FirstPlaceMedal } from "../svgs/FirstPlaceMedal";
+import { SecondPlaceMedal } from "../svgs/SecondPlaceMedal";
+import { ThirdPlaceMedal } from "../svgs/ThirdPlaceMedal";
 
 export const IdleScreen = ({
   startGame,
@@ -46,12 +49,31 @@ export const IdleScreen = ({
             </button>
           </form>
         </div>
-        <ul>
-          {leaderboard?.map((user) => {
+        <ul className="[&>*:nth-child(-n+3)]:font-bold flex flex-col items-center w-full mt-12">
+          {leaderboard?.map((user, index) => {
             return (
-              <li key={user.id} className="flex gap-4">
-                <p>{user.name}</p>
-                <p>{user.score}</p>
+              <li key={user.id} className="grid grid-cols-3 gap-2 px-2 py-1">
+                <p className="flex items-center gap-2 text-lg w-[200px]">
+                  {index === 0 ? (
+                    <FirstPlaceMedal fontSize={44} />
+                  ) : (
+                    <span></span>
+                  )}
+                  {index === 1 ? (
+                    <SecondPlaceMedal fontSize={40} />
+                  ) : (
+                    <span></span>
+                  )}
+                  {index === 2 ? (
+                    <ThirdPlaceMedal fontSize={36} />
+                  ) : (
+                    <span></span>
+                  )}
+                  <p>{user.name}</p>
+                </p>
+                <p className="bg-[#042e55] flex items-center justify-center w-fit px-2 rounded-md">
+                  {user.score.toFixed(2)} ms
+                </p>
               </li>
             );
           })}

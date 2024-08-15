@@ -9,6 +9,7 @@ import {
 } from "./screen";
 import useStatusHook from "../hook/useStatusHook";
 import { createClient } from "@supabase/supabase-js";
+import { toast, Toaster } from "sonner";
 
 export type Status = "IDLE" | "WAITING" | "CLICKING" | "RUSHED" | "RESULTS";
 
@@ -41,8 +42,6 @@ export type Leaderboard = {
   score: number;
 };
 
-console.log("Si lees esto suscríbete");
-
 export const InitialScreen = () => {
   const userTime = useRef({ start: 0, end: 0 });
   const timeoutId = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -59,10 +58,10 @@ export const InitialScreen = () => {
   useEffect(() => {
     const channel = supabase
       .channel("changes")
-      .on(
+      .on<Leaderboard>(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "users" },
-        (payload: any) => {
+        (payload) => {
           const doc = payload.new;
           setLeaderboard((prev) => {
             if (prev === null) return prev;
@@ -81,7 +80,9 @@ export const InitialScreen = () => {
       )
       .subscribe();
 
-    return () => supabase.removeChannel(channel);
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const { status, setStatus } = useStatusHook({
@@ -110,7 +111,6 @@ export const InitialScreen = () => {
       case "RESULTS":
         userTime.current.start = 0;
         userTime.current.end = 0;
-        setStatus("WAITING");
         break;
       default:
         break;
@@ -126,8 +126,25 @@ export const InitialScreen = () => {
     ) as HTMLInputElement;
     const username = usernameInput.value;
 
+    const userAlreadyExists = leaderboard?.some((user) => {
+      return user.name === username;
+    });
+
+    if (userAlreadyExists) {
+      toast.error("Name already exists");
+      return;
+    }
+
     setUser(username);
     setStatus("WAITING");
+  };
+
+  const restartGame = () => {
+    setStatus("WAITING");
+  };
+
+  const goToLeaderboard = () => {
+    setStatus("IDLE");
   };
 
   const saveUserInDB = async () => {
@@ -143,13 +160,21 @@ export const InitialScreen = () => {
         "flex flex-col gap-4 items-center justify-center w-full h-full"
       )}
     >
+      <Toaster />
+
       {status === "IDLE" && (
         <IdleScreen startGame={startGame} leaderboard={leaderboard} />
       )}
       {status === "WAITING" && <WaitingScreen />}
       {status === "CLICKING" && <ClickingScreen />}
       {status === "RUSHED" && <RushedScreen />}
-      {status === "RESULTS" && <ResultsScreen time={finalTime} />}
+      {status === "RESULTS" && (
+        <ResultsScreen
+          time={finalTime}
+          onRestart={restartGame}
+          onLeaderboard={goToLeaderboard}
+        />
+      )}
     </section>
   );
 };
