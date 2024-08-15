@@ -49,7 +49,7 @@ export const IdleScreen = ({
         <ul>
           {leaderboard?.map((user) => {
             return (
-              <li key={user.name} className="flex gap-4">
+              <li key={user.id} className="flex gap-4">
                 <p>{user.name}</p>
                 <p>{user.score}</p>
               </li>
