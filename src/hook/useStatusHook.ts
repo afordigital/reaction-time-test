@@ -14,7 +14,7 @@ const useStatusHook = ({ time = 1000, timeoutId, userTime }: Props) => {
   const [status, setStatus] = useState<Status>("IDLE");
 
   useEffect(() => {
-    if (status === "IDLE") return;
+    if (status === "IDLE" || status === "RESULTS") return;
     const randomTime = Math.floor(Math.random() * 3000) + time;
     timeoutId.current = setTimeout(() => {
       setStatus((current) => (current === "RUSHED" ? "RUSHED" : "CLICKING"));

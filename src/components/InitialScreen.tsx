@@ -29,12 +29,13 @@ const getUsersFromDB = async () => {
   const users = await supabase
     .from("users")
     .select()
-    .order("score", { ascending: false })
+    .order("score", { ascending: true })
     .limit(10);
   return users.data;
 };
 
 export type Leaderboard = {
+  id: number;
   name: string;
   created_at: Date;
   score: number;
@@ -54,6 +55,34 @@ export const InitialScreen = () => {
     if (leaderboard) return;
     getUsersFromDB().then(setLeaderboard);
   }, [leaderboard]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("changes")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "users" },
+        (payload: any) => {
+          const doc = payload.new;
+          setLeaderboard((prev) => {
+            if (prev === null) return prev;
+
+            const newLeader = structuredClone(prev);
+            newLeader.push(doc);
+            newLeader.sort((a, b) => a.score - b.score);
+
+            if (newLeader.length > 10) {
+              newLeader.pop();
+            }
+
+            return newLeader;
+          });
+        }
+      )
+      .subscribe();
+
+    return () => supabase.removeChannel(channel);
+  }, []);
 
   const { status, setStatus } = useStatusHook({
     timeoutId,
