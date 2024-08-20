@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 const supabase = createClient(process.env.PROJECT_URL, process.env.API_KEY);
 

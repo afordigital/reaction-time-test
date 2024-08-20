@@ -13,6 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "@supabase/supabase-js": "^2.45.1",
+    "cors": "^2.8.5",
     "express": "^4.19.2",
     "supabase": "^1.190.0"
   },
