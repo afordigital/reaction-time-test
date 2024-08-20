@@ -148,8 +148,19 @@ export const InitialScreen = () => {
   };
 
   const saveUserInDB = async () => {
+    const userAlreadyExists = leaderboard?.some((userData) => {
+      return userData.name === user;
+    });
+
     const newFinalTime = userTime.current.end - userTime.current.start;
-    await supabase.from("users").insert({ name: user, score: newFinalTime });
+
+    console.log(user);
+
+    if (userAlreadyExists) {
+      await supabase.from("users").update({ name: user, score: newFinalTime });
+    } else {
+      await supabase.from("users").insert({ name: user, score: newFinalTime });
+    }
   };
 
   return (
